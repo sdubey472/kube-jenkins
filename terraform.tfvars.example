@@ -1,0 +1,18 @@
+# terraform.tfvars - Update these values for your deployment
+
+aws_region      = "us-east-1"
+cluster_name    = "jenkins-eks-cluster"
+cluster_version = "1.29"
+environment     = "production"
+
+# Jenkins Configuration
+jenkins_admin_user     = "admin"
+jenkins_admin_password = "ChangeMe123!@#"  # Change this to a strong password
+
+# Common tags
+tags = {
+  Project     = "Jenkins"
+  Environment = "production"
+  ManagedBy   = "Terraform"
+  CreatedBy   = "DevOps Team"
+}

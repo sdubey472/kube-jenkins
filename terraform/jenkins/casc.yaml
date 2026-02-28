@@ -1,0 +1,199 @@
+jenkins:
+  numExecutors: 0
+  
+  # Security configuration
+  securityRealm:
+    saml:
+      binding: "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST"
+      displayNameAttributeName: "name"
+      groupsAttributeName: "groups"
+      idpMetadataConfiguration:
+        url: ""  # Configure with your IdP URL
+      mailAddressAttributeName: "mail"
+      userNameAttributeName: "username"
+
+  # Authorization strategy
+  authorizationStrategy:
+    roleBased:
+      roles:
+        global:
+          - name: "admin"
+            permissions:
+              - "hudson.model.Hudson.Administer"
+              - "hudson.model.Hudson.ConfigureUpdateCenter"
+              - "hudson.model.Hudson.Read"
+              - "hudson.model.Hudson.RunScripts"
+              - "hudson.model.Hudson.UploadPlugins"
+              - "hudson.model.Item.Build"
+              - "hudson.model.Item.Cancel"
+              - "hudson.model.Item.Configure"
+              - "hudson.model.Item.Create"
+              - "hudson.model.Item.Delete"
+              - "hudson.model.Item.Discover"
+              - "hudson.model.Item.Move"
+              - "hudson.model.Item.Read"
+              - "hudson.model.Run.Delete"
+              - "hudson.model.Run.Update"
+              - "hudson.scm.SCM.Tag"
+              - "com.cloudbees.plugins.credentials.CredentialsProvider.Create"
+              - "com.cloudbees.plugins.credentials.CredentialsProvider.Delete"
+              - "com.cloudbees.plugins.credentials.CredentialsProvider.ManageDomains"
+              - "com.cloudbees.plugins.credentials.CredentialsProvider.Update"
+              - "com.cloudbees.plugins.credentials.CredentialsProvider.View"
+          
+          - name: "developer"
+            permissions:
+              - "hudson.model.Hudson.Read"
+              - "hudson.model.Item.Build"
+              - "hudson.model.Item.Cancel"
+              - "hudson.model.Item.Discover"
+              - "hudson.model.Item.Read"
+              - "hudson.model.Run.Delete"
+              - "hudson.model.Run.Update"
+              - "com.cloudbees.plugins.credentials.CredentialsProvider.View"
+          
+          - name: "viewer"
+            permissions:
+              - "hudson.model.Hudson.Read"
+              - "hudson.model.Item.Discover"
+              - "hudson.model.Item.Read"
+              - "hudson.model.Run.Update"
+
+  # Crumb issuer for CSRF protection
+  crumbIssuer:
+    standard:
+      excludeClientIPFromCrumb: false
+
+unclassified:
+  # Location configuration
+  location:
+    url: ""  # Configure with your Jenkins URL
+
+  # Email notifications
+  mailer:
+    charset: "UTF-8"
+    replyToAddress: "jenkins@example.com"
+    smtpHost: ""  # Configure with your SMTP host
+    smtpPassword: ""
+    smtpPort: 587
+    smtpUsername: ""
+    useSMTPAuth: true
+    useTLS: true
+
+  # Cloud provider configuration for Kubernetes
+  kubernetes:
+    containerCap: 10
+    containerCapStr: "10"
+    credentialsId: ""
+    jenkinsTunnel: "jenkins-agent:50000"
+    jenkinsUrl: "http://jenkins:8080"
+    maxRequestsPerHostStr: "32"
+    namespace: "jenkins"
+    podLabels:
+      - key: "jenkins"
+        value: "agent"
+    podName: ""
+    podNamespace: ""
+    podRetention: "Never"
+    serverUrl: "https://kubernetes.default"
+    skipVolumeMounting: false
+    templates:
+      - containers:
+          - args: "agent.jar"
+            command: ""
+            envVars:
+              - envVar:
+                  key: "JENKINS_NODE_COOKIE"
+                  value: "dind"
+              - envVar:
+                  key: "JENKINS_AGENT_WORKDIR"
+                  value: "/home/jenkins/agent"
+            image: "jenkins/inbound-agent:latest"
+            livenessProbe:
+              failureThreshold: 0
+              initialDelaySeconds: 0
+              periodSeconds: 0
+              successThreshold: 0
+              timeoutSeconds: 0
+            name: "jnlp"
+            resourceLimitCpu: "500m"
+            resourceLimitMemory: "512Mi"
+            resourceRequestCpu: "100m"
+            resourceRequestMemory: "128Mi"
+            runAsUser: "1000"
+            runAsGroup: "1000"
+            workingDir: "/home/jenkins/agent"
+        id: "default"
+        idleMinutes: 0
+        instanceCap: 10
+        instanceCapStr: "10"
+        label: "kubernetes"
+        name: "default"
+        namespace: "jenkins"
+        nodeSelector: "NodeGroup=jenkins-agents"
+        podRetention: "Never"
+        serviceAccount: "jenkins"
+        slaveConnectTimeout: 100
+        slaveConnectTimeoutStr: "100"
+        supplementalGroups: ""
+        ttlAfterFinishedMinutes: 0
+        ttlAfterFinishedMinutesStr: "0"
+        workingDir: "/home/jenkins/agent"
+        yaml: |-
+          apiVersion: v1
+          kind: Pod
+          metadata:
+            labels:
+              jenkins: agent
+          spec:
+            serviceAccountName: jenkins
+            containers:
+            - name: jnlp
+              image: jenkins/inbound-agent:latest
+              imagePullPolicy: IfNotPresent
+              resources:
+                requests:
+                  memory: "128Mi"
+                  cpu: "100m"
+                limits:
+                  memory: "512Mi"
+                  cpu: "500m"
+              env:
+              - name: JENKINS_NODE_COOKIE
+                value: dind
+              - name: JENKINS_AGENT_WORKDIR
+                value: /home/jenkins/agent
+              volumeMounts:
+              - name: workspace
+                mountPath: /home/jenkins/agent
+            volumes:
+            - name: workspace
+              emptyDir: {}
+        yamlMergeStrategy: "override"
+
+  # Git configuration
+  gitSCM:
+    createAccountBasedOnEmail: false
+    disableDefaults: false
+    exclusionPatternAsSerialized: ""
+    hideCredentials: false
+    showEntireCommitSummaryInChanges: false
+    useExistingAccountWithSameEmail: false
+
+# Credentials configuration
+credentials:
+  system:
+    domainCredentials:
+      - credentials:
+          - scope: GLOBAL
+            id: "docker-registry"
+            description: "Docker Registry Credentials"
+            username: ""
+            password: ""
+            class: "com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl"
+          - scope: GLOBAL
+            id: "aws-credentials"
+            description: "AWS Credentials"
+            accessKey: ""
+            secretKey: ""
+            class: "com.cloudbees.jenkins.plugins.kubernetes.credentials.KubernetesCredential"
